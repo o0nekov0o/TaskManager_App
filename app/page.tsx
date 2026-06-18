@@ -7,12 +7,8 @@ export default function Home() {
         🚀 Task Manager App
       </h1>
 
-      <Link
-        href="/dashboard"
-        className="bg-black text-white px-4 py-2 rounded-xl"
-      >
-        Go to Dashboard
-      </Link>
+      <Link href="/login">Login</Link>
+      <Link href="/register">Register</Link>
     </main>
   )
 }
