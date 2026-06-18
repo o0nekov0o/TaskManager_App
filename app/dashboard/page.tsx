@@ -6,11 +6,22 @@ import { supabase } from '@/lib/supabaseClient'
 export default function Dashboard() {
   const [tasks, setTasks] = useState<any[]>([])
   const [title, setTitle] = useState('')
+  const [filter, setFilter] = useState<'all' | 'done' | 'pending'>('all')
 
   const fetchTasks = async () => {
-    const { data } = await supabase.from('tasks').select('*')
+    const { data: userData } = await supabase.auth.getUser()
+    const user = userData.user
+
+    if (!user) return
+
+    const { data } = await supabase
+      .from('tasks')
+      .select('*')
+      .eq('user_id', user.id)
+
     setTasks(data || [])
   }
+
 
   useEffect(() => {
     fetchTasks()
@@ -19,8 +30,17 @@ export default function Dashboard() {
   const addTask = async () => {
     if (!title) return
 
+    const { data: userData } = await supabase.auth.getUser()
+    const user = userData.user
+
+    if (!user) return
+
     await supabase.from('tasks').insert([
-      { title, completed: false }
+      {
+        title,
+        completed: false,
+        user_id: user.id
+      }
     ])
 
     setTitle('')
@@ -50,6 +70,33 @@ export default function Dashboard() {
       <h1 className="text-3xl font-bold mb-6">
         📊 Dashboard
       </h1>
+      
+      <div className="flex gap-2 mb-4">
+        <button onClick={() => setFilter('all')}>All</button>
+        <button onClick={() => setFilter('done')}>Done</button>
+        <button onClick={() => setFilter('pending')}>Pending</button>
+      </div>
+
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="bg-white p-4 rounded-xl shadow">
+          <p>Total</p>
+          <p className="text-xl font-bold">{tasks.length}</p>
+        </div>
+
+        <div className="bg-white p-4 rounded-xl shadow">
+          <p>Completed</p>
+          <p className="text-xl font-bold">
+            {tasks.filter(t => t.completed).length}
+          </p>
+        </div>
+
+        <div className="bg-white p-4 rounded-xl shadow">
+          <p>Pending</p>
+          <p className="text-xl font-bold">
+            {tasks.filter(t => !t.completed).length}
+          </p>
+        </div>
+      </div>
 
       <div className="flex gap-2 mb-6">
         <input
@@ -67,10 +114,16 @@ export default function Dashboard() {
       </div>
 
       <ul className="space-y-2">
-        {tasks.map((task) => (
+        {tasks
+          .filter((task) => {
+            if (filter === 'done') return task.completed
+            if (filter === 'pending') return !task.completed
+            return true
+          })
+          .map((task) => (
           <li
             key={task.id}
-            className="flex justify-between items-center bg-white shadow p-3 rounded-xl"
+            className="flex justify-between items-center bg-white shadow p-3 rounded-xl hover:shadow-lg transition"
           >
             <div className="flex items-center gap-2">
               <input
@@ -78,7 +131,11 @@ export default function Dashboard() {
                 checked={task.completed}
                 onChange={() => toggleTask(task.id, task.completed)}
               />
-              <span className={task.completed ? 'line-through' : ''}>
+              <span
+                className={`transition-all duration-200 ${
+                  task.completed ? 'line-through opacity-50' : ''
+                }`}
+              >
                 {task.title}
               </span>
             </div>
