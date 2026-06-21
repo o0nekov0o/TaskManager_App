@@ -75,7 +75,7 @@ L’objectif était de reproduire une application SaaS simple, en mettant en pla
 ## 🛠️ Installation
 
 ```bash
-git clone https://github.com/ton-repo/task-manager-app.git
+git clone https://github.com/o0nekov0o/TaskManager_App.git
 cd task-manager-app
 npm install
 npm run dev
